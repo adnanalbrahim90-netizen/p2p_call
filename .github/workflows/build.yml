@@ -1,0 +1,38 @@
+name: Build APK
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Unzip project
+        run: unzip -q p2p_call.zip -d src
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.27.4'
+
+      - name: Build
+        working-directory: src/p2p_call
+        run: |
+          flutter create --platforms=android --org com.bohashim --project-name p2p_call .
+          rm -f android/build.gradle.kts android/settings.gradle.kts android/app/build.gradle.kts
+          rm -rf test
+          flutter pub get
+          flutter build apk --release
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: p2p_call-apk
+          path: src/p2p_call/build/app/outputs/flutter-apk/app-release.apk
